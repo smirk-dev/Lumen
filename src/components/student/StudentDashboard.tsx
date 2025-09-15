@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { AddActivityDialog } from "./AddActivityDialog";
 import { StudentStats } from "./StudentStats";
 import { ActivityCard } from "./ActivityCard";
-import { Plus, Clock, CheckCircle, XCircle, Trophy, User } from "lucide-react";
+import { Plus, Clock, CheckCircle, XCircle, Trophy, User as UserIcon } from "lucide-react";
 import type { User, Activity } from "../../App";
 
 interface StudentDashboardProps {
@@ -48,7 +48,7 @@ export function StudentDashboard({ user, activities, onAddActivity }: StudentDas
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+            <UserIcon className="h-5 w-5" />
             Student Profile
           </CardTitle>
         </CardHeader>
