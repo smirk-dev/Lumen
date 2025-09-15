@@ -28,12 +28,14 @@ import { AdminStats } from "./AdminStats";
 import { AdminAnalytics } from "./AdminAnalytics";
 import { ApprovedActivityCard } from "./ApprovedActivityCard";
 import { ExportDialog } from "./ExportDialog";
+import { UserManagement } from "./UserManagement";
 import {
   Search,
   Download,
   BarChart3,
   FileText,
   Calendar,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { User, Activity } from "../../App";
@@ -41,11 +43,19 @@ import type { User, Activity } from "../../App";
 interface AdminDashboardProps {
   user: User;
   activities: Activity[];
+  users: User[];
+  onAddUser: (userData: Omit<User, 'id'>) => void;
+  onUpdateUser: (userId: string, userData: Partial<User>) => void;
+  onDeleteUser: (userId: string) => void;
 }
 
 export function AdminDashboard({
   user,
   activities,
+  users,
+  onAddUser,
+  onUpdateUser,
+  onDeleteUser,
 }: AdminDashboardProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -452,6 +462,10 @@ export function AdminDashboard({
             <BarChart3 className="h-4 w-4 mr-2" />
             Analytics
           </TabsTrigger>
+          <TabsTrigger value="users">
+            <Users className="h-4 w-4 mr-2" />
+            User Management
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="activities">
@@ -502,6 +516,15 @@ export function AdminDashboard({
           <AdminAnalytics
             activities={activities}
             detailed={true}
+          />
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UserManagement
+            users={users}
+            onAddUser={onAddUser}
+            onUpdateUser={onUpdateUser}
+            onDeleteUser={onDeleteUser}
           />
         </TabsContent>
       </Tabs>

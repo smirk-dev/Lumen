@@ -36,12 +36,14 @@ export interface Activity {
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
 
   // Load user and activities from localStorage on mount
   useEffect(() => {
     try {
       const savedUser = localStorage.getItem('currentUser');
       const savedActivities = localStorage.getItem('activities');
+      const savedUsers = localStorage.getItem('users');
       
       if (savedUser) {
         const parsedUser = JSON.parse(savedUser);
@@ -60,9 +62,21 @@ export default function App() {
       } else {
         initializeSampleData();
       }
+
+      if (savedUsers) {
+        const parsedUsers = JSON.parse(savedUsers);
+        if (Array.isArray(parsedUsers)) {
+          setUsers(parsedUsers);
+        } else {
+          initializeSampleUsers();
+        }
+      } else {
+        initializeSampleUsers();
+      }
     } catch (error) {
       console.error('Error loading data from localStorage:', error);
       initializeSampleData();
+      initializeSampleUsers();
     }
   }, []);
 
@@ -146,6 +160,58 @@ export default function App() {
     }
   };
 
+  const initializeSampleUsers = () => {
+    const sampleUsers: User[] = [
+      {
+        id: "1",
+        name: "John Smith",
+        email: "john.smith@university.edu",
+        role: 'student',
+        department: "Computer Science",
+        year: "Senior",
+        studentId: "CS2022001"
+      },
+      {
+        id: "2",
+        name: "Dr. Emily Chen",
+        email: "emily.chen@university.edu",
+        role: 'faculty',
+        department: "Computer Science"
+      },
+      {
+        id: "3",
+        name: "Michael Johnson",
+        email: "michael.johnson@university.edu",
+        role: 'admin',
+        department: "Administration"
+      },
+      {
+        id: "4",
+        name: "Sarah Johnson",
+        email: "sarah.johnson@university.edu",
+        role: 'student',
+        department: "Computer Science",
+        year: "Junior",
+        studentId: "CS2022002"
+      },
+      {
+        id: "5",
+        name: "Emily Davis",
+        email: "emily.davis@university.edu",
+        role: 'student',
+        department: "Computer Science",
+        year: "Sophomore",
+        studentId: "CS2022003"
+      }
+    ];
+    setUsers(sampleUsers);
+    try {
+      localStorage.setItem('users', JSON.stringify(sampleUsers));
+    } catch (error) {
+      console.error('Error saving sample users to localStorage:', error);
+    }
+  };
+
   // Save activities to localStorage whenever they change
   useEffect(() => {
     if (activities.length > 0) {
@@ -156,6 +222,17 @@ export default function App() {
       }
     }
   }, [activities]);
+
+  // Save users to localStorage whenever they change
+  useEffect(() => {
+    if (users.length > 0) {
+      try {
+        localStorage.setItem('users', JSON.stringify(users));
+      } catch (error) {
+        console.error('Error saving users to localStorage:', error);
+      }
+    }
+  }, [users]);
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);
@@ -199,11 +276,34 @@ export default function App() {
     ));
   };
 
+  const addUser = (userData: Omit<User, 'id'>) => {
+    const newUser: User = {
+      ...userData,
+      id: Date.now().toString()
+    };
+    setUsers(prev => [...prev, newUser]);
+  };
+
+  const updateUser = (userId: string, userData: Partial<User>) => {
+    setUsers(prev => prev.map(user => 
+      user.id === userId ? { ...user, ...userData } : user
+    ));
+  };
+
+  const deleteUser = (userId: string) => {
+    setUsers(prev => prev.filter(user => user.id !== userId));
+    // Also remove activities for deleted students
+    setActivities(prev => prev.filter(activity => {
+      const user = users.find(u => u.id === userId);
+      return !(user?.role === 'student' && activity.studentId === user.studentId);
+    }));
+  };
+
   // If no user is logged in, show login form
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-background">
-        <LoginForm onLogin={handleLogin} />
+        <LoginForm onLogin={handleLogin} users={users} />
         <Toaster position="bottom-right" />
       </div>
     );
@@ -234,6 +334,10 @@ export default function App() {
         <AdminDashboard 
           user={currentUser}
           activities={activities.filter(a => a.status === 'approved') || []}
+          users={users}
+          onAddUser={addUser}
+          onUpdateUser={updateUser}
+          onDeleteUser={deleteUser}
         />
       )}
       

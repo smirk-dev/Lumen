@@ -6,14 +6,15 @@ import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Badge } from "../ui/badge";
 import { User, Users, Shield, GraduationCap } from "lucide-react";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import type { User as UserType } from "../../App";
 
 interface LoginFormProps {
   onLogin: (user: UserType) => void;
+  users?: UserType[];
 }
 
-export function LoginForm({ onLogin }: LoginFormProps) {
+export function LoginForm({ onLogin, users = [] }: LoginFormProps) {
   const [selectedRole, setSelectedRole] = useState<'student' | 'faculty' | 'admin' | ''>('');
   const [formData, setFormData] = useState({
     name: '',
@@ -51,8 +52,27 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   };
 
   const handleDemoLogin = (role: keyof typeof demoUsers) => {
-    onLogin(demoUsers[role]);
-    toast.success(`Logged in as ${demoUsers[role].name} (${role})`);
+    const demoUser = demoUsers[role];
+    
+    // For students and faculty, check if they exist in the users database
+    if (role !== 'admin') {
+      const existingUser = users.find(user => 
+        user.email === demoUser.email && user.role === role
+      );
+      
+      if (!existingUser) {
+        toast.error(`This ${role} account has not been created by an administrator. Please contact admin to create your account.`);
+        return;
+      }
+      
+      // Use the data from the database instead of demo data
+      onLogin(existingUser);
+      toast.success(`Logged in as ${existingUser.name} (${role})`);
+    } else {
+      // Admin can always log in with demo data
+      onLogin(demoUser);
+      toast.success(`Logged in as ${demoUser.name} (${role})`);
+    }
   };
 
   const handleCustomLogin = () => {
@@ -61,8 +81,8 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       return;
     }
 
-    if (selectedRole === 'student' && (!formData.department || !formData.year || !formData.studentId)) {
-      toast.error("Please fill in all student information");
+    if (selectedRole !== 'admin') {
+      toast.error("Only administrators can create new accounts");
       return;
     }
 
@@ -71,14 +91,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       name: formData.name,
       email: formData.email,
       role: selectedRole,
-      ...(selectedRole === 'student' && {
-        department: formData.department,
-        year: formData.year,
-        studentId: formData.studentId
-      }),
-      ...(selectedRole === 'faculty' && {
-        department: formData.department
-      })
+      department: formData.department || 'Administration'
     };
 
     onLogin(user);
@@ -156,11 +169,23 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           </Card>
         </div>
 
-        {/* Custom Login Form */}
+        {/* Login Help Text */}
+        <div className="text-center max-w-md mx-auto">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-900 mb-2">Account Access Information</h3>
+            <div className="text-sm text-blue-700 space-y-2">
+              <p><strong>Students & Faculty:</strong> Use the demo login cards above to access your accounts.</p>
+              <p><strong>New Accounts:</strong> Only administrators can create new student and faculty accounts.</p>
+              <p><strong>Administrators:</strong> Use the form below to create admin accounts or access user management.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Admin Login Form */}
         <Card className="max-w-md mx-auto">
           <CardHeader>
-            <CardTitle>Custom Login</CardTitle>
-            <CardDescription>Create your own user profile</CardDescription>
+            <CardTitle>Admin Login</CardTitle>
+            <CardDescription>Admin-only account creation</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -170,8 +195,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="student">Student</SelectItem>
-                  <SelectItem value="faculty">Faculty</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -198,52 +221,12 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               />
             </div>
 
-            {selectedRole === 'student' && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="department">Department</Label>
-                  <Input
-                    id="department"
-                    placeholder="e.g., Computer Science"
-                    value={formData.department}
-                    onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="year">Academic Year</Label>
-                  <Select value={formData.year} onValueChange={(value) => setFormData(prev => ({ ...prev, year: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Freshman">Freshman</SelectItem>
-                      <SelectItem value="Sophomore">Sophomore</SelectItem>
-                      <SelectItem value="Junior">Junior</SelectItem>
-                      <SelectItem value="Senior">Senior</SelectItem>
-                      <SelectItem value="Graduate">Graduate</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="studentId">Student ID</Label>
-                  <Input
-                    id="studentId"
-                    placeholder="e.g., CS2022001"
-                    value={formData.studentId}
-                    onChange={(e) => setFormData(prev => ({ ...prev, studentId: e.target.value }))}
-                  />
-                </div>
-              </>
-            )}
-
-            {selectedRole === 'faculty' && (
+            {selectedRole === 'admin' && (
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
                 <Input
                   id="department"
-                  placeholder="e.g., Computer Science"
+                  placeholder="e.g., Administration"
                   value={formData.department}
                   onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
                 />
@@ -251,8 +234,8 @@ export function LoginForm({ onLogin }: LoginFormProps) {
             )}
           </CardContent>
           <CardFooter>
-            <Button onClick={handleCustomLogin} className="w-full">
-              Login
+            <Button onClick={handleCustomLogin} className="w-full" disabled={selectedRole !== 'admin'}>
+              Login as Admin
             </Button>
           </CardFooter>
         </Card>
