@@ -1,9 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { CalendarDays, Mail, Phone, MapPin, GraduationCap, BookOpen, Edit } from "lucide-react";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { CalendarDays, Mail, Phone, MapPin, GraduationCap, BookOpen } from "lucide-react";
 import { EditProfileDialog } from "./EditProfileDialog";
 
 interface StudentProfile {

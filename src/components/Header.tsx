@@ -1,4 +1,4 @@
-import { Bell, Search, Settings, User, BookOpen, Trophy, BarChart3 } from "lucide-react";
+import { Bell, Search, Settings, BookOpen, Trophy, BarChart3 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";

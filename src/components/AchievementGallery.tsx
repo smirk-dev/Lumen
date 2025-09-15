@@ -1,8 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Trophy, Award, Star, Medal, FileText, Crown, Trash2, CheckCircle } from "lucide-react";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { Trophy, Trash2, CheckCircle } from "lucide-react";
 import { AddAchievementDialog } from "./AddAchievementDialog";
 import { toast } from "sonner";
 

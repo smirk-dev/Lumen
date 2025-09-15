@@ -17,6 +17,7 @@ A modern educational platform built with React and TypeScript, providing compreh
 ## Project Structure
 
 ```
+
 src/
 ├── components/
 │   ├── student/           # Student-specific components
@@ -28,6 +29,7 @@ src/
 │   └── ui/                # Reusable UI components (shadcn/ui based)
 ├── styles/                # Global styling and CSS modules
 └── guidelines/            # Project documentation and guidelines
+
 ```
 
 ## Key Components
@@ -49,11 +51,13 @@ src/
 
 1. Clone the repository
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Start the development server:
+
    ```bash
    npm run dev
    ```
@@ -79,6 +83,7 @@ npm run build
 ## Dependencies
 
 This project uses several key dependencies:
+
 - **Radix UI**: For accessible, unstyled UI primitives
 - **Lucide React**: For consistent iconography
 - **Sonner**: For elegant toast notifications
