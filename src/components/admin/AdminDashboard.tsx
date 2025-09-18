@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "../ui/card";
 import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
 import {
   Tabs,
   TabsContent,
@@ -38,6 +37,7 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useIsMobile } from "../ui/use-mobile";
 import type { User, Activity } from "../../App";
 
 interface AdminDashboardProps {
@@ -50,7 +50,6 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({
-  user,
   activities,
   users,
   onAddUser,
@@ -62,6 +61,7 @@ export function AdminDashboard({
   const [dateFilter, setDateFilter] = useState("all");
   const [showExportDialog, setShowExportDialog] =
     useState(false);
+  const isMobile = useIsMobile();
 
   // Get unique activity types for filter
   const activityTypes = Array.from(
@@ -357,11 +357,11 @@ export function AdminDashboard({
   };
 
   return (
-    <main className="max-w-7xl mx-auto p-6 space-y-8">
+    <main className="max-w-7xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-8">
       {/* Welcome Section */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Comprehensive view of verified student achievements
           and activities.
         </p>
@@ -373,25 +373,26 @@ export function AdminDashboard({
       {/* Analytics Charts */}
       <AdminAnalytics activities={activities} />
 
-      {/* Filters and Search */}
+      {/* Filters and Search - Mobile Optimized */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <Search className="h-4 w-4 sm:h-5 sm:w-5" />
             Filter & Search Activities
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm">
             Filter and search through approved student
             activities
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="sm:col-span-2 lg:col-span-1">
               <Input
-                placeholder="Search students, activities..."
+                placeholder={isMobile ? "Search..." : "Search students, activities..."}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
               />
             </div>
             <div>
@@ -440,44 +441,52 @@ export function AdminDashboard({
             <div>
               <Button
                 onClick={() => setShowExportDialog(true)}
-                className="w-full"
+                className="w-full h-10"
                 disabled={filteredActivities.length === 0}
+                size={isMobile ? "sm" : "default"}
               >
                 <Download className="h-4 w-4 mr-2" />
-                Export ({filteredActivities.length})
+                <span className="hidden sm:inline">Export ({filteredActivities.length})</span>
+                <span className="sm:hidden">Export</span>
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="activities" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="activities">
-            <FileText className="h-4 w-4 mr-2" />
-            Activities ({filteredActivities.length})
-          </TabsTrigger>
-          <TabsTrigger value="analytics">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Analytics
-          </TabsTrigger>
-          <TabsTrigger value="users">
-            <Users className="h-4 w-4 mr-2" />
-            User Management
-          </TabsTrigger>
-        </TabsList>
+      {/* Main Content Tabs - Mobile Optimized */}
+      <Tabs defaultValue="activities" className="space-y-4 sm:space-y-6">
+        <div className="w-full overflow-x-auto">
+          <TabsList className="grid h-auto w-full grid-cols-3 gap-1 sm:gap-0 min-w-max sm:min-w-0">
+            <TabsTrigger value="activities" className="text-xs sm:text-sm px-2 sm:px-3 py-2">
+              <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Activities</span>
+              <span className="sm:hidden">Data</span>
+              ({filteredActivities.length})
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm px-2 sm:px-3 py-2">
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Analytics</span>
+              <span className="sm:hidden">Charts</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm px-2 sm:px-3 py-2">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">User Management</span>
+              <span className="sm:hidden">Users</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="activities">
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {filteredActivities.length === 0 ? (
               <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">
+                <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12">
+                  <FileText className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />
+                  <h3 className="text-base sm:text-lg font-semibold mb-2">
                     No activities found
                   </h3>
-                  <p className="text-muted-foreground text-center">
+                  <p className="text-sm sm:text-base text-muted-foreground text-center px-4">
                     {searchTerm ||
                     typeFilter !== "all" ||
                     dateFilter !== "all"
@@ -495,6 +504,7 @@ export function AdminDashboard({
                         setDateFilter("all");
                       }}
                       className="mt-4"
+                      size={isMobile ? "sm" : "default"}
                     >
                       Clear Filters
                     </Button>

@@ -5,6 +5,14 @@ import { FacultyDashboard } from "./components/faculty/FacultyDashboard";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
 import { RoleHeader } from "./components/shared/RoleHeader";
 import { Toaster } from "./components/ui/sonner";
+import { AnalyticsView } from "./components/analytics/AnalyticsView";
+import { UserManagementView } from "./components/admin/UserManagementView";
+import { ReportsView } from "./components/reports/ReportsView";
+import { SettingsView } from "./components/settings/SettingsView";
+import { StudentProfileView } from "./components/student/StudentProfileView";
+import { StudentActivitiesView } from "./components/student/StudentActivitiesView";
+import { FacultyStudentsView } from "./components/faculty/FacultyStudentsView";
+import { FacultyReviewView } from "./components/faculty/FacultyReviewView";
 
 export interface User {
   id: string;
@@ -33,10 +41,22 @@ export interface Activity {
   comments?: string;
 }
 
+export type NavigationSection = 
+  | 'dashboard' 
+  | 'analytics' 
+  | 'user-management' 
+  | 'reports' 
+  | 'settings'
+  | 'profile'
+  | 'activities'
+  | 'students'
+  | 'review';
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [currentSection, setCurrentSection] = useState<NavigationSection>('dashboard');
 
   // Load user and activities from localStorage on mount
   useEffect(() => {
@@ -309,37 +329,100 @@ export default function App() {
     );
   }
 
+  const renderCurrentSection = () => {
+    const studentActivities = activities.filter(a => a.studentId === currentUser?.studentId) || [];
+    const approvedActivities = activities.filter(a => a.status === 'approved') || [];
+
+    switch (currentSection) {
+      case 'dashboard':
+        if (currentUser?.role === 'student') {
+          return (
+            <StudentDashboard 
+              user={currentUser} 
+              activities={studentActivities}
+              onAddActivity={addActivity}
+            />
+          );
+        } else if (currentUser?.role === 'faculty') {
+          return (
+            <FacultyDashboard 
+              user={currentUser}
+              activities={activities}
+              onUpdateActivityStatus={updateActivityStatus}
+            />
+          );
+        } else if (currentUser?.role === 'admin') {
+          return (
+            <AdminDashboard 
+              user={currentUser}
+              activities={approvedActivities}
+              users={users}
+              onAddUser={addUser}
+              onUpdateUser={updateUser}
+              onDeleteUser={deleteUser}
+            />
+          );
+        }
+        break;
+      
+      case 'analytics':
+        return <AnalyticsView user={currentUser!} activities={activities} users={users} />;
+      
+      case 'user-management':
+        return (
+          <UserManagementView 
+            users={users}
+            onAddUser={addUser}
+            onUpdateUser={updateUser}
+            onDeleteUser={deleteUser}
+          />
+        );
+      
+      case 'reports':
+        return <ReportsView activities={approvedActivities} users={users} />;
+      
+      case 'settings':
+        return <SettingsView user={currentUser!} onUpdateUser={(userData) => updateUser(currentUser!.id, userData)} />;
+      
+      case 'profile':
+        return <StudentProfileView user={currentUser!} activities={studentActivities} />;
+      
+      case 'activities':
+        return (
+          <StudentActivitiesView 
+            user={currentUser!}
+            activities={studentActivities}
+            onAddActivity={addActivity}
+          />
+        );
+      
+      case 'students':
+        return <FacultyStudentsView users={users.filter(u => u.role === 'student')} activities={activities} />;
+      
+      case 'review':
+        return (
+          <FacultyReviewView 
+            activities={activities}
+            onUpdateActivityStatus={updateActivityStatus}
+          />
+        );
+      
+      default:
+        return <div className="p-8 text-center">Section not found</div>;
+    }
+  };
+
   // Render role-specific dashboard
   return (
     <div className="min-h-screen bg-background">
-      <RoleHeader user={currentUser} onLogout={handleLogout} />
+      <RoleHeader 
+        user={currentUser} 
+        onLogout={handleLogout}
+        currentSection={currentSection}
+        onNavigate={setCurrentSection}
+      />
       
-      {currentUser.role === 'student' && (
-        <StudentDashboard 
-          user={currentUser} 
-          activities={activities.filter(a => a.studentId === currentUser.studentId) || []}
-          onAddActivity={addActivity}
-        />
-      )}
-      
-      {currentUser.role === 'faculty' && (
-        <FacultyDashboard 
-          user={currentUser}
-          activities={activities || []}
-          onUpdateActivityStatus={updateActivityStatus}
-        />
-      )}
-      
-      {currentUser.role === 'admin' && (
-        <AdminDashboard 
-          user={currentUser}
-          activities={activities.filter(a => a.status === 'approved') || []}
-          users={users}
-          onAddUser={addUser}
-          onUpdateUser={updateUser}
-          onDeleteUser={deleteUser}
-        />
-      )}
+      {renderCurrentSection()}
       
       <Toaster position="bottom-right" />
     </div>

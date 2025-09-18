@@ -189,3 +189,235 @@
 html {
   font-size: var(--font-size);
 }
+
+/* Mobile-first responsive improvements */
+@layer utilities {
+  /* Touch-friendly button sizes */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Smooth scroll for mobile */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Card hover effects optimized for mobile */
+  .card-interactive {
+    transition: all 0.2s ease-in-out;
+  }
+
+  @media (hover: hover) {
+    .card-interactive:hover {
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+  }
+
+  .card-interactive:active {
+    transform: scale(0.98);
+  }
+
+  @media (min-width: 640px) {
+    .card-interactive:active {
+      transform: scale(1);
+    }
+  }
+
+  /* Mobile-optimized tabs */
+  .mobile-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x mandatory;
+  }
+
+  .mobile-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-tabs > * {
+    scroll-snap-align: start;
+  }
+
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Floating Action Button positioning */
+  .fab {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    height: 3.5rem;
+    width: 3.5rem;
+    border-radius: 9999px;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    z-index: 40;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .fab:hover {
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+    transform: scale(1.05);
+  }
+
+  .fab:active {
+    transform: scale(0.95);
+  }
+
+  /* Mobile-friendly form inputs */
+  .mobile-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Safe area padding for devices with notches */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Mobile navigation improvements */
+  .mobile-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+    background-color: rgb(255 255 255 / 0.8);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  /* Responsive grid layouts */
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .responsive-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .responsive-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+  }
+
+  .responsive-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .responsive-grid-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .responsive-grid-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+  }
+
+  /* Touch-friendly spacing */
+  .touch-spacing > * + * {
+    margin-top: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .touch-spacing > * + * {
+      margin-top: 1rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .touch-spacing > * + * {
+      margin-top: 1.5rem;
+    }
+  }
+}
+
+/* Custom animations for mobile interactions */
+@keyframes slideInFromRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.slide-in-right {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+.slide-out-right {
+  animation: slideOutToRight 0.3s ease-in;
+}
+
+/* Mobile-optimized focus states */
+@media (max-width: 768px) {
+  button:focus,
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: 2px solid rgb(59 130 246);
+    outline-offset: 2px;
+  }
+}
+
+/* Prevent horizontal scroll on mobile */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Optimize touch targets for accessibility */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
