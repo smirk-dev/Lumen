@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
-import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { AddActivityDialog } from "./AddActivityDialog";
 import { ActivityCard } from "./ActivityCard";
+import { SearchWithSuggestions } from "../shared/SearchWithSuggestions";
+import { FilterChips } from "../shared/FilterChips";
 import { Plus, Search, Filter, Calendar, Award, Clock, XCircle } from "lucide-react";
+import { useSearch } from "../../hooks/useSearch";
+import { useFilters, type FilterConfig } from "../../hooks/useFilters";
 
 import { useIsMobile } from "../ui/use-mobile";
 import type { User, Activity } from "../../App";
@@ -19,36 +21,83 @@ interface StudentActivitiesViewProps {
 
 export function StudentActivitiesView({ user, activities, onAddActivity }: StudentActivitiesViewProps) {
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterType, setFilterType] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
   const isMobile = useIsMobile();
 
-  const activityTypes = [...new Set(activities.map(a => a.type))];
+  // Filter configuration for the enhanced filtering system
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: 'status',
+      label: 'Status',
+      type: 'select',
+      defaultValue: 'all',
+      options: [
+        { value: 'all', label: 'All Status' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'approved', label: 'Approved' },
+        { value: 'rejected', label: 'Rejected' }
+      ]
+    },
+    {
+      id: 'type',
+      label: 'Activity Type',
+      type: 'select',
+      defaultValue: 'all',
+      options: [
+        { value: 'all', label: 'All Types' },
+        ...Array.from(new Set(activities.map(a => a.type))).map(type => ({
+          value: type,
+          label: type
+        }))
+      ]
+    }
+  ];
 
-  const filteredActivities = activities
-    .filter(activity => {
-      const matchesSearch = activity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           activity.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = filterStatus === "all" || activity.status === filterStatus;
-      const matchesType = filterType === "all" || activity.type === filterType;
-      return matchesSearch && matchesStatus && matchesType;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
-        case "oldest":
-          return new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
-        case "title":
-          return a.title.localeCompare(b.title);
-        case "type":
-          return a.type.localeCompare(b.type);
-        default:
-          return 0;
-      }
-    });
+  // Enhanced search hook
+  const {
+    searchTerm,
+    setSearchTerm,
+    filteredItems: searchFilteredActivities,
+    searchSuggestions,
+    searchHistory,
+    clearHistory
+  } = useSearch(activities, {
+    searchFields: ['title', 'description', 'type'],
+    debounceMs: 200
+  });
+
+  // Enhanced filters hook
+  const {
+    filteredItems: finalFilteredActivities,
+    activeFilters,
+    updateFilter,
+    clearFilter,
+    clearAllFilters,
+    saveCurrentFilters,
+    loadSavedFilter,
+    deleteSavedFilter,
+    savedFilters,
+    filters
+  } = useFilters(searchFilteredActivities, filterConfigs);
+
+  // Apply sorting to the final filtered results
+  const sortedActivities = finalFilteredActivities.sort((a, b) => {
+    switch (sortBy) {
+      case "newest":
+        return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+      case "oldest":
+        return new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
+      case "title":
+        return a.title.localeCompare(b.title);
+      case "type":
+        return a.type.localeCompare(b.type);
+      case "status":
+        const statusOrder = { 'pending': 0, 'approved': 1, 'rejected': 2 };
+        return statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder];
+      default:
+        return 0;
+    }
+  });
 
   const stats = {
     total: activities.length,
@@ -57,10 +106,9 @@ export function StudentActivitiesView({ user, activities, onAddActivity }: Stude
     rejected: activities.filter(a => a.status === 'rejected').length,
   };
 
-  const clearFilters = () => {
-    setSearchTerm("");
-    setFilterStatus("all");
-    setFilterType("all");
+  const handleClearAllFilters = () => {
+    setSearchTerm('');
+    clearAllFilters();
     setSortBy("newest");
   };
 
@@ -130,59 +178,35 @@ export function StudentActivitiesView({ user, activities, onAddActivity }: Stude
         </Card>
       </div>
 
-      {/* Filters and Search */}
+      {/* Enhanced Filters and Search */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Filter & Search
+            Enhanced Search & Filter
           </CardTitle>
           <CardDescription>
-            Find specific activities using filters and search
+            Find specific activities using advanced search and filtering
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            {/* Search */}
-            <div className="lg:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search activities..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+        <CardContent className="space-y-4">
+          {/* Enhanced Search */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="md:col-span-2">
+              <SearchWithSuggestions
+                value={searchTerm}
+                onChange={setSearchTerm}
+                onSearch={setSearchTerm}
+                placeholder="Search your activities, titles, or descriptions..."
+                suggestions={searchSuggestions}
+                searchHistory={searchHistory}
+                onClearHistory={clearHistory}
+                maxSuggestions={6}
+                maxHistory={4}
+              />
             </div>
             
-            {/* Status Filter */}
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            {/* Type Filter */}
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {activityTypes.map(type => (
-                  <SelectItem key={type} value={type}>{type}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            {/* Sort */}
+            {/* Sort Options */}
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger>
                 <SelectValue placeholder="Sort by" />
@@ -192,31 +216,51 @@ export function StudentActivitiesView({ user, activities, onAddActivity }: Stude
                 <SelectItem value="oldest">Oldest First</SelectItem>
                 <SelectItem value="title">Title A-Z</SelectItem>
                 <SelectItem value="type">Type A-Z</SelectItem>
+                <SelectItem value="status">Status (Pending First)</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          
-          {(searchTerm || filterStatus !== "all" || filterType !== "all" || sortBy !== "newest") && (
-            <div className="flex items-center justify-between mt-4 pt-4 border-t">
-              <div className="flex flex-wrap gap-2">
-                {searchTerm && (
-                  <Badge variant="secondary">Search: "{searchTerm}"</Badge>
-                )}
-                {filterStatus !== "all" && (
-                  <Badge variant="secondary">Status: {filterStatus}</Badge>
-                )}
-                {filterType !== "all" && (
-                  <Badge variant="secondary">Type: {filterType}</Badge>
-                )}
-                {sortBy !== "newest" && (
-                  <Badge variant="secondary">Sort: {sortBy}</Badge>
-                )}
-              </div>
-              <Button variant="outline" size="sm" onClick={clearFilters}>
-                Clear Filters
-              </Button>
-            </div>
-          )}
+
+          {/* Filter Controls */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Select value={filters.status} onValueChange={(value) => updateFilter('status', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending ({activities.filter(a => a.status === 'pending').length})</SelectItem>
+                <SelectItem value="approved">Approved ({activities.filter(a => a.status === 'approved').length})</SelectItem>
+                <SelectItem value="rejected">Rejected ({activities.filter(a => a.status === 'rejected').length})</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Select value={filters.type} onValueChange={(value) => updateFilter('type', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Activity Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {Array.from(new Set(activities.map(a => a.type))).map(type => (
+                  <SelectItem key={type} value={type}>
+                    {type} ({activities.filter(a => a.type === type).length})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Filter Chips */}
+          <FilterChips
+            activeFilters={activeFilters}
+            savedFilters={savedFilters}
+            onClearFilter={clearFilter}
+            onClearAllFilters={handleClearAllFilters}
+            onSaveFilters={saveCurrentFilters}
+            onLoadSavedFilter={loadSavedFilter}
+            onDeleteSavedFilter={deleteSavedFilter}
+            showSaveFilters={true}
+          />
         </CardContent>
       </Card>
 
@@ -224,18 +268,18 @@ export function StudentActivitiesView({ user, activities, onAddActivity }: Stude
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">
-            Activities ({filteredActivities.length})
+            Activities ({sortedActivities.length})
           </h2>
-          {filteredActivities.length > 0 && (
+          {sortedActivities.length > 0 && (
             <div className="text-sm text-muted-foreground">
-              Showing {filteredActivities.length} of {activities.length} activities
+              Showing {sortedActivities.length} of {activities.length} activities
             </div>
           )}
         </div>
 
-        {filteredActivities.length > 0 ? (
+        {sortedActivities.length > 0 ? (
           <div className="grid gap-4 md:gap-6">
-            {filteredActivities.map((activity) => (
+            {sortedActivities.map((activity) => (
               <ActivityCard
                 key={activity.id}
                 activity={activity}
@@ -268,7 +312,7 @@ export function StudentActivitiesView({ user, activities, onAddActivity }: Stude
                       Try adjusting your search criteria or filters
                     </p>
                   </div>
-                  <Button variant="outline" onClick={clearFilters}>
+                  <Button variant="outline" onClick={handleClearAllFilters}>
                     Clear All Filters
                   </Button>
                 </div>

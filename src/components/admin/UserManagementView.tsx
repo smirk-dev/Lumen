@@ -8,8 +8,12 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { UserPlus, Edit2, Trash2, Users, Shield, GraduationCap, Search } from "lucide-react";
+import { SearchWithSuggestions } from "../shared/SearchWithSuggestions";
+import { FilterChips } from "../shared/FilterChips";
+import { UserPlus, Edit2, Trash2, Users, Shield, GraduationCap, Filter } from "lucide-react";
 import { toast } from "sonner";
+import { useSearch } from "../../hooks/useSearch";
+import { useFilters, type FilterConfig } from "../../hooks/useFilters";
 import type { User } from "../../App";
 
 interface UserManagementViewProps {
@@ -20,8 +24,6 @@ interface UserManagementViewProps {
 }
 
 export function UserManagementView({ users, onAddUser, onUpdateUser, onDeleteUser }: UserManagementViewProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterRole, setFilterRole] = useState<string>("all");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
@@ -33,13 +35,79 @@ export function UserManagementView({ users, onAddUser, onUpdateUser, onDeleteUse
     studentId: ""
   });
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (user.studentId && user.studentId.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesRole = filterRole === "all" || user.role === filterRole;
-    return matchesSearch && matchesRole;
+  // Filter configuration for the enhanced filtering system
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: 'role',
+      label: 'Role',
+      type: 'select',
+      defaultValue: 'all',
+      options: [
+        { value: 'all', label: 'All Roles' },
+        { value: 'student', label: 'Students' },
+        { value: 'faculty', label: 'Faculty' },
+        { value: 'admin', label: 'Admins' }
+      ]
+    },
+    {
+      id: 'department',
+      label: 'Department',
+      type: 'select',
+      defaultValue: 'all',
+      options: [
+        { value: 'all', label: 'All Departments' },
+        ...Array.from(new Set(users.filter(u => u.department).map(u => u.department))).map(dept => ({
+          value: dept!,
+          label: dept!
+        }))
+      ]
+    },
+    {
+      id: 'year',
+      label: 'Academic Year',
+      type: 'select',
+      defaultValue: 'all',
+      options: [
+        { value: 'all', label: 'All Years' },
+        { value: 'Freshman', label: 'Freshman' },
+        { value: 'Sophomore', label: 'Sophomore' },
+        { value: 'Junior', label: 'Junior' },
+        { value: 'Senior', label: 'Senior' }
+      ]
+    }
+  ];
+
+  // Enhanced search hook
+  const {
+    searchTerm,
+    setSearchTerm,
+    filteredItems: searchFilteredUsers,
+    searchSuggestions,
+    searchHistory,
+    clearHistory
+  } = useSearch(users, {
+    searchFields: ['name', 'email', 'studentId', 'department'],
+    debounceMs: 200
   });
+
+  // Enhanced filters hook
+  const {
+    filteredItems: finalFilteredUsers,
+    activeFilters,
+    updateFilter,
+    clearFilter,
+    clearAllFilters,
+    saveCurrentFilters,
+    loadSavedFilter,
+    deleteSavedFilter,
+    savedFilters,
+    filters
+  } = useFilters(searchFilteredUsers, filterConfigs);
+
+  const handleClearAllFilters = () => {
+    setSearchTerm('');
+    clearAllFilters();
+  };
 
   const resetForm = () => {
     setFormData({
@@ -296,37 +364,96 @@ export function UserManagementView({ users, onAddUser, onUpdateUser, onDeleteUse
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Enhanced Filters and Search */}
       <Card>
         <CardHeader>
-          <CardTitle>Users</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Enhanced User Search & Filter
+          </CardTitle>
           <CardDescription>
-            Search and filter user accounts
+            Search and filter user accounts with advanced options
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search users..."
+        <CardContent className="space-y-4">
+          {/* Enhanced Search and Bulk Actions */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="md:col-span-2">
+              <SearchWithSuggestions
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                onChange={setSearchTerm}
+                onSearch={setSearchTerm}
+                placeholder="Search users by name, email, student ID, or department..."
+                suggestions={searchSuggestions}
+                searchHistory={searchHistory}
+                onClearHistory={clearHistory}
+                maxSuggestions={6}
+                maxHistory={4}
               />
             </div>
-            <Select value={filterRole} onValueChange={setFilterRole}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue />
+            
+            {/* Bulk Actions (Future Enhancement) */}
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled>
+                <Users className="h-4 w-4 mr-2" />
+                Bulk Actions
+              </Button>
+            </div>
+          </div>
+
+          {/* Filter Controls */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Select value={filters.role} onValueChange={(value) => updateFilter('role', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by Role" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="student">Students</SelectItem>
-                <SelectItem value="faculty">Faculty</SelectItem>
-                <SelectItem value="admin">Admins</SelectItem>
+                <SelectItem value="student">Students ({users.filter(u => u.role === 'student').length})</SelectItem>
+                <SelectItem value="faculty">Faculty ({users.filter(u => u.role === 'faculty').length})</SelectItem>
+                <SelectItem value="admin">Admins ({users.filter(u => u.role === 'admin').length})</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.department} onValueChange={(value) => updateFilter('department', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by Department" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Departments</SelectItem>
+                {Array.from(new Set(users.filter(u => u.department).map(u => u.department))).map(dept => (
+                  <SelectItem key={dept} value={dept!}>
+                    {dept} ({users.filter(u => u.department === dept).length})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.year} onValueChange={(value) => updateFilter('year', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by Year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Years</SelectItem>
+                <SelectItem value="Freshman">Freshman ({users.filter(u => u.year === 'Freshman').length})</SelectItem>
+                <SelectItem value="Sophomore">Sophomore ({users.filter(u => u.year === 'Sophomore').length})</SelectItem>
+                <SelectItem value="Junior">Junior ({users.filter(u => u.year === 'Junior').length})</SelectItem>
+                <SelectItem value="Senior">Senior ({users.filter(u => u.year === 'Senior').length})</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {/* Filter Chips */}
+          <FilterChips
+            activeFilters={activeFilters}
+            savedFilters={savedFilters}
+            onClearFilter={clearFilter}
+            onClearAllFilters={handleClearAllFilters}
+            onSaveFilters={saveCurrentFilters}
+            onLoadSavedFilter={loadSavedFilter}
+            onDeleteSavedFilter={deleteSavedFilter}
+            showSaveFilters={true}
+          />
 
           {/* Users Table */}
           <div className="border rounded-lg">
@@ -341,7 +468,7 @@ export function UserManagementView({ users, onAddUser, onUpdateUser, onDeleteUse
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
+                {finalFilteredUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -396,7 +523,7 @@ export function UserManagementView({ users, onAddUser, onUpdateUser, onDeleteUse
             </Table>
           </div>
           
-          {filteredUsers.length === 0 && (
+          {finalFilteredUsers.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               No users found matching your criteria
             </div>
