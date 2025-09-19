@@ -15,7 +15,6 @@ import { toast } from "sonner";
 import { useSearch } from "../../hooks/useSearch";
 import { useFilters, type FilterConfig } from "../../hooks/useFilters";
 import type { User } from "../../App";
-
 interface UserManagementViewProps {
   users: User[];
   onAddUser: (userData: Omit<User, 'id'>) => void;
