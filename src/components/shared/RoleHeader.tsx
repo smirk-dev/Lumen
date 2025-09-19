@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { UserButton } from "@clerk/clerk-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Avatar, AvatarFallback } from "../ui/avatar";
@@ -129,17 +130,14 @@ export function RoleHeader({ user, onLogout, currentSection, onNavigate }: RoleH
 
           {/* Logout Button */}
           <div className="pt-4 border-t">
-            <Button 
-              variant="outline" 
-              className="w-full h-12"
-              onClick={() => {
-                setIsMenuOpen(false);
-                onLogout();
+            <UserButton 
+              appearance={{
+                elements: {
+                  rootBox: "w-full",
+                  avatarBox: "h-8 w-8"
+                }
               }}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            />
           </div>
         </div>
       </SheetContent>
@@ -202,14 +200,17 @@ export function RoleHeader({ user, onLogout, currentSection, onNavigate }: RoleH
                 </AvatarFallback>
               </Avatar>
 
-              <Button variant="outline" size="sm" onClick={onLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
+              <UserButton 
+                appearance={{
+                  elements: {
+                    avatarBox: "h-8 w-8"
+                  }
+                }}
+              />
             </div>
           )}
 
-          {/* Mobile User Avatar and Logout */}
+          {/* Mobile User Avatar and User Button */}
           {isMobile && (
             <div className="flex items-center space-x-2">
               <Avatar className="h-8 w-8">
@@ -217,10 +218,13 @@ export function RoleHeader({ user, onLogout, currentSection, onNavigate }: RoleH
                   {user.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
-              <Button variant="ghost" size="sm" onClick={onLogout}>
-                <LogOut className="h-4 w-4" />
-                <span className="sr-only">Logout</span>
-              </Button>
+              <UserButton 
+                appearance={{
+                  elements: {
+                    avatarBox: "h-8 w-8"
+                  }
+                }}
+              />
             </div>
           )}
         </div>

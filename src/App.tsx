@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useUser, SignedIn, SignedOut } from "@clerk/clerk-react";
 import { LoginForm } from "./components/auth/LoginForm";
 import { StudentDashboard } from "./components/student/StudentDashboard";
 import { FacultyDashboard } from "./components/faculty/FacultyDashboard";
@@ -53,24 +54,49 @@ export type NavigationSection =
   | 'review';
 
 export default function App() {
+  const { user: clerkUser, isLoaded } = useUser();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [currentSection, setCurrentSection] = useState<NavigationSection>('dashboard');
 
-  // Load user and activities from localStorage on mount
+  // Convert Clerk user to your User interface and handle role assignment
+  useEffect(() => {
+    if (isLoaded && clerkUser) {
+      // Check if user already exists in our users array
+      const existingUser = users.find(u => u.email === clerkUser.primaryEmailAddress?.emailAddress);
+      
+      if (existingUser) {
+        // Use existing user data with role information
+        setCurrentUser(existingUser);
+      } else {
+        // Create new user with default student role
+        // In a real app, you'd set roles via Clerk metadata or your backend
+        const mappedUser: User = {
+          id: clerkUser.id,
+          name: clerkUser.fullName || `${clerkUser.firstName} ${clerkUser.lastName}` || 'User',
+          email: clerkUser.primaryEmailAddress?.emailAddress || '',
+          role: 'student', // Default role - can be customized via Clerk metadata
+          department: "Computer Science", // Can be set via Clerk metadata
+          year: "Senior", // Can be set via Clerk metadata
+          studentId: `CS${Date.now().toString().slice(-6)}` // Generate or get from metadata
+        };
+        setCurrentUser(mappedUser);
+        
+        // Add new user to users array
+        setUsers(prev => [...prev, mappedUser]);
+      }
+    } else if (isLoaded && !clerkUser) {
+      // User is signed out
+      setCurrentUser(null);
+    }
+  }, [clerkUser, isLoaded, users]);
+
+  // Initialize data on mount
   useEffect(() => {
     try {
-      const savedUser = localStorage.getItem('currentUser');
       const savedActivities = localStorage.getItem('activities');
       const savedUsers = localStorage.getItem('users');
-      
-      if (savedUser) {
-        const parsedUser = JSON.parse(savedUser);
-        if (parsedUser && typeof parsedUser === 'object') {
-          setCurrentUser(parsedUser);
-        }
-      }
       
       if (savedActivities) {
         const parsedActivities = JSON.parse(savedActivities);
@@ -254,24 +280,6 @@ export default function App() {
     }
   }, [users]);
 
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-    try {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-    } catch (error) {
-      console.error('Error saving user to localStorage:', error);
-    }
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    try {
-      localStorage.removeItem('currentUser');
-    } catch (error) {
-      console.error('Error removing user from localStorage:', error);
-    }
-  };
-
   const addActivity = (activityData: Omit<Activity, 'id' | 'submittedAt' | 'status'>) => {
     const newActivity: Activity = {
       ...activityData,
@@ -319,12 +327,10 @@ export default function App() {
     }));
   };
 
-  // If no user is logged in, show login form
-  if (!currentUser) {
+  if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-background">
-        <LoginForm onLogin={handleLogin} users={users} />
-        <Toaster position="bottom-right" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
       </div>
     );
   }
@@ -346,7 +352,6 @@ export default function App() {
         } else if (currentUser?.role === 'faculty') {
           return (
             <FacultyDashboard 
-              user={currentUser}
               activities={activities}
               onUpdateActivityStatus={updateActivityStatus}
             />
@@ -415,14 +420,24 @@ export default function App() {
   // Render role-specific dashboard
   return (
     <div className="min-h-screen bg-background">
-      <RoleHeader 
-        user={currentUser} 
-        onLogout={handleLogout}
-        currentSection={currentSection}
-        onNavigate={setCurrentSection}
-      />
+      <SignedOut>
+        <LoginForm />
+      </SignedOut>
       
-      {renderCurrentSection()}
+      <SignedIn>
+        {currentUser && (
+          <>
+            <RoleHeader 
+              user={currentUser} 
+              onLogout={() => {}} // Clerk handles logout
+              currentSection={currentSection}
+              onNavigate={setCurrentSection}
+            />
+            
+            {renderCurrentSection()}
+          </>
+        )}
+      </SignedIn>
       
       <Toaster position="bottom-right" />
     </div>
