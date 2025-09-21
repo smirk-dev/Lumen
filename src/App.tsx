@@ -18,7 +18,21 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import type { User, Activity, NavigationSection } from "./types";
 
 export default function App() {
-  const { user: clerkUser, isLoaded } = useUser();
+  const clerkUser = null; // Fallback when Clerk is not available
+  const isLoaded = true;   // Fallback when Clerk is not available
+  
+  // Try to use Clerk if available
+  let actualClerkUser, actualIsLoaded;
+  try {
+    const clerkHook = useUser();
+    actualClerkUser = clerkHook.user;
+    actualIsLoaded = clerkHook.isLoaded;
+  } catch (error) {
+    console.warn("Clerk not available, using fallback", error);
+    actualClerkUser = null;
+    actualIsLoaded = true;
+  }
+  
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [users, setUsers] = useState<User[]>([]);
