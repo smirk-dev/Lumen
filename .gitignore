@@ -1,44 +1,306 @@
-node_modules
-build
+# ========================================
+# DEPENDENCIES & NODE MODULES
+# ========================================
+node_modules/
+npm-shrinkwrap.json
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnpm-store/
+.yarn/
+.yarnrc.yml
 
-# Environment variables
+# ========================================
+# BUILD OUTPUTS & DISTRIBUTION
+# ========================================
+build/
+dist/
+out/
+.next/
+.nuxt/
+.vuepress/dist/
+.serverless/
+.fusebox/
+.dynamodb/
+.umi/
+.umi-production/
+.umi-test/
+
+# ========================================
+# ENVIRONMENT VARIABLES & SECRETS
+# ========================================
 .env
 .env.local
+.env.development
 .env.development.local
+.env.test
 .env.test.local
+.env.production
 .env.production.local
+.env.staging
+.env.staging.local
+*.env
+.envrc
+.secrets
 
-# Logs
+# API keys and sensitive configuration
+config/secrets.yml
+config/database.yml
+config/master.key
+*.pem
+*.key
+*.crt
+*.csr
+secrets.json
+
+# ========================================
+# LOGS & DEBUGGING
+# ========================================
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
+debug.log
+error.log
+combined.log
+audit.log
 
-# Runtime data
-pids
+# ========================================
+# RUNTIME DATA & PROCESS FILES
+# ========================================
+pids/
 *.pid
 *.seed
 *.pid.lock
+.lock-wscript
 
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
+# ========================================
+# CACHE DIRECTORIES
+# ========================================
+.npm/
+.yarn-integrity
+.cache/
+.parcel-cache/
 .eslintcache
+.stylelintcache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+.coverage/
+.nyc_output/
+.sass-cache/
+.vite/
+node_modules/.cache/
 
-# IDE and editor files
+# ========================================
+# TESTING & COVERAGE
+# ========================================
+coverage/
+*.lcov
+.nyc_output/
+lib-cov/
+.grunt/
+.jest/
+junit.xml
+test-results/
+.tsbuildinfo
+
+# ========================================
+# IDE & EDITOR FILES
+# ========================================
+# Visual Studio Code
 .vscode/
+*.code-workspace
+
+# JetBrains IDEs
 .idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.metadata/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
 *.swp
 *.swo
 *~
+.netrwhist
 
-# OS generated files
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Atom
+.atom/
+.vscode-test/
+
+# ========================================
+# OPERATING SYSTEM FILES
+# ========================================
+# macOS
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
+.AppleDouble
+.LSOverride
+Icon
+.DocumentRevisions-V100
+.fseventsd
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ========================================
+# TYPESCRIPT & JAVASCRIPT
+# ========================================
+*.tsbuildinfo
+.tscache/
+tsconfig.tsbuildinfo
+
+# ========================================
+# REACT & VITE SPECIFIC
+# ========================================
+# Vite
+.vite/
+vite.config.*.timestamp-*
+
+# React
+.react/
+
+# ========================================
+# DATABASES & LOCAL STORAGE
+# ========================================
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+db.json
+.mongodb/
+redis-dump.rdb
+
+# ========================================
+# TEMPORARY FILES & BACKUPS
+# ========================================
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+*.rej
+*~
+.#*
+*.autosave
+
+# ========================================
+# DOCKER & CONTAINERIZATION
+# ========================================
+.dockerignore
+Dockerfile.dev
+docker-compose.override.yml
+.docker/
+
+# ========================================
+# CI/CD & DEPLOYMENT
+# ========================================
+.github/workflows/*.yml.bak
+.circleci/
+.travis.yml
+.gitlab-ci.yml
+.jenkins/
+.github/workflows/secrets/
+deployment-config/
+k8s-config/
+
+# ========================================
+# MISCELLANEOUS
+# ========================================
+# Optional REPL history
+.node_repl_history
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.parcel-cache
+
+# Microbundle cache
+.rpt2_cache/
+
+# Optional stylelint cache
+.stylelintcache
+
+# Storybook build outputs
+.out
+.storybook-out
+storybook-static/
+
+# Sentry Config File
+.sentryclirc
+
+# Temporary folders
+tmp/
+temp/
+
+# Ignore Mac DS_Store files
+**/.DS_Store
+
+# Ignore certificate files
+*.p12
+*.pfx
+
+# Local Netlify folder
+.netlify/
+
+# Local Vercel folder
+.vercel/
+
+# Ignore firebase cache
+.firebase/
+
+# Ignore Supabase local development files
+supabase/.temp/
+.supabase/
+
+# ========================================
+# PROJECT SPECIFIC
+# ========================================
+# Add any project-specific files or directories here
+# Examples:
+# /docs/build/
+# /uploads/
+# /user-uploads/
