@@ -14,44 +14,8 @@ import { StudentProfileView } from "./components/student/StudentProfileView";
 import { StudentActivitiesView } from "./components/student/StudentActivitiesView";
 import { FacultyStudentsView } from "./components/faculty/FacultyStudentsView";
 import { FacultyReviewView } from "./components/faculty/FacultyReviewView";
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'student' | 'faculty' | 'admin';
-  department?: string;
-  year?: string;
-  studentId?: string;
-}
-
-export interface Activity {
-  id: string;
-  title: string;
-  type: string;
-  description: string;
-  date: string;
-  studentId: string;
-  studentName: string;
-  fileUrl?: string;
-  fileName?: string;
-  status: 'pending' | 'approved' | 'rejected';
-  submittedAt: string;
-  reviewedAt?: string;
-  reviewedBy?: string;
-  comments?: string;
-}
-
-export type NavigationSection = 
-  | 'dashboard' 
-  | 'analytics' 
-  | 'user-management' 
-  | 'reports' 
-  | 'settings'
-  | 'profile'
-  | 'activities'
-  | 'students'
-  | 'review';
+import ErrorBoundary from "./components/ErrorBoundary";
+import type { User, Activity, NavigationSection } from "./types";
 
 export default function App() {
   const { user: clerkUser, isLoaded } = useUser();
