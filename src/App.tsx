@@ -383,27 +383,29 @@ export default function App() {
 
   // Render role-specific dashboard
   return (
-    <div className="min-h-screen bg-background">
-      <SignedOut>
-        <LoginForm />
-      </SignedOut>
-      
-      <SignedIn>
-        {currentUser && (
-          <>
-            <RoleHeader 
-              user={currentUser} 
-              onLogout={() => {}} // Clerk handles logout
-              currentSection={currentSection}
-              onNavigate={setCurrentSection}
-            />
-            
-            {renderCurrentSection()}
-          </>
-        )}
-      </SignedIn>
-      
-      <Toaster position="bottom-right" />
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-background">
+        <SignedOut>
+          <LoginForm />
+        </SignedOut>
+        
+        <SignedIn>
+          {currentUser && (
+            <>
+              <RoleHeader 
+                user={currentUser} 
+                onLogout={() => {}} // Clerk handles logout
+                currentSection={currentSection}
+                onNavigate={setCurrentSection}
+              />
+              
+              {renderCurrentSection()}
+            </>
+          )}
+        </SignedIn>
+        
+        <Toaster position="bottom-right" />
+      </div>
+    </ErrorBoundary>
   );
 }
