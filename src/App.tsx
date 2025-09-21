@@ -447,36 +447,75 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-red-500 p-8">
-      <h1 className="text-white text-4xl">DEBUG: App is rendering</h1>
-      <div className="bg-white p-4 mt-4 rounded">
-        <p>Clerk loaded: {isLoaded ? 'YES' : 'NO'}</p>
-        <p>Clerk user: {clerkUser ? 'EXISTS' : 'NONE'}</p>
-        <p>Current user: {currentUser ? currentUser.name : 'NONE'}</p>
-        <p>Activities: {activities.length}</p>
-        <p>Users: {users.length}</p>
-      </div>
-      
-      <SignedOut>
-        <div className="bg-blue-500 text-white p-4 mt-4 rounded">
-          SIGNED OUT - Should show login
-          <LoginForm />
-        </div>
-      </SignedOut>
-      
-      <SignedIn>
-        <div className="bg-green-500 text-white p-4 mt-4 rounded">
-          SIGNED IN - Should show dashboard
-          {currentUser ? (
+    <div className="min-h-screen bg-gray-100">
+      <div className="p-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">🎯 Lumen - Student Activity Platform</h1>
+        
+        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+          <h2 className="text-xl font-semibold mb-4">Debug Information</h2>
+          <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p>User: {currentUser.name} ({currentUser.role})</p>
-              <p>Current section: {currentSection}</p>
+              <p><span className="font-medium">Clerk Status:</span> {actualIsLoaded ? '✅ Loaded' : '⏳ Loading'}</p>
+              <p><span className="font-medium">Clerk User:</span> {actualClerkUser ? `✅ ${actualClerkUser.fullName}` : '❌ None'}</p>
+              <p><span className="font-medium">Current User:</span> {currentUser ? `✅ ${currentUser.name} (${currentUser.role})` : '❌ None'}</p>
             </div>
-          ) : (
-            <p>Signed in but no currentUser set</p>
-          )}
+            <div>
+              <p><span className="font-medium">Activities:</span> {activities.length} total</p>
+              <p><span className="font-medium">Users:</span> {users.length} total</p>
+              <p><span className="font-medium">Section:</span> {currentSection}</p>
+            </div>
+          </div>
         </div>
-      </SignedIn>
+
+        {/* Show the appropriate content based on authentication */}
+        {!actualClerkUser ? (
+          <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-blue-900 mb-2">Development Mode</h3>
+            <p className="text-blue-700 mb-4">Running without Clerk authentication. Using demo data.</p>
+            {currentUser ? (
+              <div className="bg-white p-4 rounded border">
+                <p className="font-medium">Demo User: {currentUser.name}</p>
+                <p className="text-sm text-gray-600">Role: {currentUser.role}</p>
+                <div className="mt-4">
+                  <button 
+                    onClick={() => setCurrentSection('dashboard')}
+                    className="bg-blue-500 text-white px-4 py-2 rounded mr-2 hover:bg-blue-600"
+                  >
+                    Dashboard
+                  </button>
+                  <button 
+                    onClick={() => setCurrentSection('activities')}
+                    className="bg-green-500 text-white px-4 py-2 rounded mr-2 hover:bg-green-600"
+                  >
+                    Activities
+                  </button>
+                  <button 
+                    onClick={() => setCurrentSection('analytics')}
+                    className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+                  >
+                    Analytics
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-red-600">No demo user available. Check data initialization.</p>
+            )}
+          </div>
+        ) : (
+          <div className="bg-green-50 border border-green-200 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-green-900 mb-2">Authenticated Mode</h3>
+            <p className="text-green-700">Signed in with Clerk: {actualClerkUser.fullName}</p>
+          </div>
+        )}
+
+        {/* Render the actual dashboard content if we have a user */}
+        {currentUser && (
+          <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-lg font-semibold mb-4">Dashboard Content</h3>
+            {renderCurrentSection()}
+          </div>
+        )}
+      </div>
       
       <Toaster position="bottom-right" />
     </div>
