@@ -7,7 +7,7 @@ import { Separator } from '../ui/separator';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '../ui/utils';
 import { useDebounce } from '../../hooks/useDebounce';
-import type { User, Activity } from '../../App';
+import type { User, Activity, UserRole, GlobalSearchProps } from '../../types';
 
 export interface GlobalSearchItem {
   id: string;
