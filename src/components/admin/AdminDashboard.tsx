@@ -38,16 +38,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "../ui/use-mobile";
-import type { User, Activity } from "../../App";
-
-interface AdminDashboardProps {
-  user: User;
-  activities: Activity[];
-  users: User[];
-  onAddUser: (userData: Omit<User, 'id'>) => void;
-  onUpdateUser: (userId: string, userData: Partial<User>) => void;
-  onDeleteUser: (userId: string) => void;
-}
+import type { User, Activity, AdminDashboardProps } from "../../types";
 
 export function AdminDashboard({
   activities,
