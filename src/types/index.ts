@@ -66,10 +66,13 @@ export interface AdminDashboardProps {
 }
 
 export interface GlobalSearchProps {
-  activities: Activity[];
-  users: User[];
-  onSelectActivity?: (activity: Activity) => void;
-  onSelectUser?: (user: User) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  activities?: Activity[];
+  users?: User[];
+  currentUserRole?: UserRole;
+  onNavigate?: (path: string) => void;
+  onAction?: (actionId: string, payload?: any) => void;
 }
 
 export interface RoleHeaderProps {
