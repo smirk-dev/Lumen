@@ -434,29 +434,38 @@ export default function App() {
   };
 
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen bg-background">
-        <SignedOut>
-          <LoginForm />
-        </SignedOut>
-        
-        <SignedIn>
-          {currentUser && (
-            <>
-              <RoleHeader 
-                user={currentUser} 
-                onLogout={() => {}} // Clerk handles logout
-                currentSection={currentSection}
-                onNavigate={setCurrentSection}
-              />
-              
-              {renderCurrentSection()}
-            </>
-          )}
-        </SignedIn>
-        
-        <Toaster position="bottom-right" />
+    <div className="min-h-screen bg-red-500 p-8">
+      <h1 className="text-white text-4xl">DEBUG: App is rendering</h1>
+      <div className="bg-white p-4 mt-4 rounded">
+        <p>Clerk loaded: {isLoaded ? 'YES' : 'NO'}</p>
+        <p>Clerk user: {clerkUser ? 'EXISTS' : 'NONE'}</p>
+        <p>Current user: {currentUser ? currentUser.name : 'NONE'}</p>
+        <p>Activities: {activities.length}</p>
+        <p>Users: {users.length}</p>
       </div>
-    </ErrorBoundary>
+      
+      <SignedOut>
+        <div className="bg-blue-500 text-white p-4 mt-4 rounded">
+          SIGNED OUT - Should show login
+          <LoginForm />
+        </div>
+      </SignedOut>
+      
+      <SignedIn>
+        <div className="bg-green-500 text-white p-4 mt-4 rounded">
+          SIGNED IN - Should show dashboard
+          {currentUser ? (
+            <div>
+              <p>User: {currentUser.name} ({currentUser.role})</p>
+              <p>Current section: {currentSection}</p>
+            </div>
+          ) : (
+            <p>Signed in but no currentUser set</p>
+          )}
+        </div>
+      </SignedIn>
+      
+      <Toaster position="bottom-right" />
+    </div>
   );
 }
