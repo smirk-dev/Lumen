@@ -1,8 +1,21 @@
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { LoginForm } from "./components/auth/LoginForm";
+import { StudentDashboard } from "./components/student/StudentDashboard";
+import { FacultyDashboard } from "./components/faculty/FacultyDashboard";
+import { AdminDashboard } from "./components/admin/AdminDashboard";
+import { RoleHeader } from "./components/shared/RoleHeader";
 import { Toaster } from "./components/ui/sonner";
-import { AppRouter } from "./routes/AppRouter";
-import type { User, Activity } from "./types";
+import { AnalyticsView } from "./components/analytics/AnalyticsView";
+import { UserManagementView } from "./components/admin/UserManagementView";
+import { ReportsView } from "./components/reports/ReportsView";
+import { SettingsView } from "./components/settings/SettingsView";
+import { StudentProfileView } from "./components/student/StudentProfileView";
+import { StudentActivitiesView } from "./components/student/StudentActivitiesView";
+import { FacultyStudentsView } from "./components/faculty/FacultyStudentsView";
+import { FacultyReviewView } from "./components/faculty/FacultyReviewView";
+import ErrorBoundary from "./components/ErrorBoundary";
+import type { User, Activity, NavigationSection } from "./types";
 
 export default function App() {
   const { user: clerkUser, isLoaded } = useUser();
