@@ -18,7 +18,21 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import type { User, Activity, NavigationSection } from "./types";
 
 export default function App() {
-  const { user: clerkUser, isLoaded } = useUser();
+  const clerkUser = null; // Fallback when Clerk is not available
+  const isLoaded = true;   // Fallback when Clerk is not available
+  
+  // Try to use Clerk if available
+  let actualClerkUser, actualIsLoaded;
+  try {
+    const clerkHook = useUser();
+    actualClerkUser = clerkHook.user;
+    actualIsLoaded = clerkHook.isLoaded;
+  } catch (error) {
+    console.warn("Clerk not available, using fallback", error);
+    actualClerkUser = null;
+    actualIsLoaded = true;
+  }
+  
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -26,35 +40,34 @@ export default function App() {
 
   // Convert Clerk user to your User interface and handle role assignment
   useEffect(() => {
-    if (isLoaded && clerkUser) {
+    if (actualIsLoaded && actualClerkUser) {
       // Check if user already exists in our users array
-      const existingUser = users.find(u => u.email === clerkUser.primaryEmailAddress?.emailAddress);
+      const existingUser = users.find(u => u.email === actualClerkUser.primaryEmailAddress?.emailAddress);
       
       if (existingUser) {
         // Use existing user data with role information
         setCurrentUser(existingUser);
       } else {
         // Create new user with default student role
-        // In a real app, you'd set roles via Clerk metadata or your backend
         const mappedUser: User = {
-          id: clerkUser.id,
-          name: clerkUser.fullName || `${clerkUser.firstName} ${clerkUser.lastName}` || 'User',
-          email: clerkUser.primaryEmailAddress?.emailAddress || '',
-          role: 'student', // Default role - can be customized via Clerk metadata
-          department: "Computer Science", // Can be set via Clerk metadata
-          year: "Senior", // Can be set via Clerk metadata
-          studentId: `CS${Date.now().toString().slice(-6)}` // Generate or get from metadata
+          id: actualClerkUser.id,
+          name: actualClerkUser.fullName || `${actualClerkUser.firstName} ${actualClerkUser.lastName}` || 'User',
+          email: actualClerkUser.primaryEmailAddress?.emailAddress || '',
+          role: 'student',
+          department: "Computer Science",
+          year: "Senior",
+          studentId: `CS${Date.now().toString().slice(-6)}`
         };
         setCurrentUser(mappedUser);
-        
-        // Add new user to users array
         setUsers(prev => [...prev, mappedUser]);
       }
-    } else if (isLoaded && !clerkUser) {
-      // User is signed out
-      setCurrentUser(null);
+    } else if (actualIsLoaded && !actualClerkUser) {
+      // For development without Clerk, create a demo user
+      if (!currentUser && users.length > 0) {
+        setCurrentUser(users[0]); // Use first demo user
+      }
     }
-  }, [clerkUser, isLoaded, users]);
+  }, [actualClerkUser, actualIsLoaded, users, currentUser]);
 
   // Initialize data on mount
   useEffect(() => {
@@ -434,29 +447,77 @@ export default function App() {
   };
 
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen bg-background">
-        <SignedOut>
-          <LoginForm />
-        </SignedOut>
+    <div className="min-h-screen bg-gray-100">
+      <div className="p-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">🎯 Lumen - Student Activity Platform</h1>
         
-        <SignedIn>
-          {currentUser && (
-            <>
-              <RoleHeader 
-                user={currentUser} 
-                onLogout={() => {}} // Clerk handles logout
-                currentSection={currentSection}
-                onNavigate={setCurrentSection}
-              />
-              
-              {renderCurrentSection()}
-            </>
-          )}
-        </SignedIn>
-        
-        <Toaster position="bottom-right" />
+        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+          <h2 className="text-xl font-semibold mb-4">Debug Information</h2>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p><span className="font-medium">Clerk Status:</span> {actualIsLoaded ? '✅ Loaded' : '⏳ Loading'}</p>
+              <p><span className="font-medium">Clerk User:</span> {actualClerkUser ? `✅ ${actualClerkUser.fullName}` : '❌ None'}</p>
+              <p><span className="font-medium">Current User:</span> {currentUser ? `✅ ${currentUser.name} (${currentUser.role})` : '❌ None'}</p>
+            </div>
+            <div>
+              <p><span className="font-medium">Activities:</span> {activities.length} total</p>
+              <p><span className="font-medium">Users:</span> {users.length} total</p>
+              <p><span className="font-medium">Section:</span> {currentSection}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Show the appropriate content based on authentication */}
+        {!actualClerkUser ? (
+          <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-blue-900 mb-2">Development Mode</h3>
+            <p className="text-blue-700 mb-4">Running without Clerk authentication. Using demo data.</p>
+            {currentUser ? (
+              <div className="bg-white p-4 rounded border">
+                <p className="font-medium">Demo User: {currentUser.name}</p>
+                <p className="text-sm text-gray-600">Role: {currentUser.role}</p>
+                <div className="mt-4">
+                  <button 
+                    onClick={() => setCurrentSection('dashboard')}
+                    className="bg-blue-500 text-white px-4 py-2 rounded mr-2 hover:bg-blue-600"
+                  >
+                    Dashboard
+                  </button>
+                  <button 
+                    onClick={() => setCurrentSection('activities')}
+                    className="bg-green-500 text-white px-4 py-2 rounded mr-2 hover:bg-green-600"
+                  >
+                    Activities
+                  </button>
+                  <button 
+                    onClick={() => setCurrentSection('analytics')}
+                    className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+                  >
+                    Analytics
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-red-600">No demo user available. Check data initialization.</p>
+            )}
+          </div>
+        ) : (
+          <div className="bg-green-50 border border-green-200 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-green-900 mb-2">Authenticated Mode</h3>
+            <p className="text-green-700">Signed in with Clerk: {actualClerkUser.fullName}</p>
+          </div>
+        )}
+
+        {/* Render the actual dashboard content if we have a user */}
+        {currentUser && (
+          <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-lg font-semibold mb-4">Dashboard Content</h3>
+            {renderCurrentSection()}
+          </div>
+        )}
       </div>
-    </ErrorBoundary>
+      
+      <Toaster position="bottom-right" />
+    </div>
   );
 }
