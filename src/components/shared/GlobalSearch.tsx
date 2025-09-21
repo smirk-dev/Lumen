@@ -21,16 +21,6 @@ export interface GlobalSearchItem {
   keywords?: string[];
 }
 
-export interface GlobalSearchProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  activities?: Activity[];
-  users?: User[];
-  currentUserRole?: 'student' | 'faculty' | 'admin';
-  onNavigate?: (path: string) => void;
-  onAction?: (actionId: string, payload?: any) => void;
-}
-
 export function GlobalSearch({
   open,
   onOpenChange,
