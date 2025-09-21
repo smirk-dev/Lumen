@@ -222,105 +222,122 @@ export default function App() {
     }
   };
 
-  // Save activities to localStorage whenever they change
-  useEffect(() => {
-    if (activities.length > 0) {
-      try {
-        localStorage.setItem('activities', JSON.stringify(activities));
-      } catch (error) {
-        console.error('Error saving activities to localStorage:', error);
-      }
-    }
-  }, [activities]);
-
-  // Save users to localStorage whenever they change
-  useEffect(() => {
-    if (users.length > 0) {
-      try {
-        localStorage.setItem('users', JSON.stringify(users));
-      } catch (error) {
-        console.error('Error saving users to localStorage:', error);
-      }
-    }
-  }, [users]);
-
+  // Activity management functions
   const addActivity = (activityData: Omit<Activity, 'id' | 'submittedAt' | 'status'>) => {
     const newActivity: Activity = {
       ...activityData,
-      id: Date.now().toString(),
-      status: 'pending',
-      submittedAt: new Date().toISOString()
+      id: `act_${Date.now()}`,
+      submittedAt: new Date().toISOString(),
+      status: 'pending'
     };
-    setActivities(prev => [newActivity, ...prev]);
+    
+    const updatedActivities = [...activities, newActivity];
+    setActivities(updatedActivities);
+    
+    try {
+      localStorage.setItem('activities', JSON.stringify(updatedActivities));
+    } catch (error) {
+      console.error('Error saving activities to localStorage:', error);
+    }
   };
 
-  const updateActivityStatus = (activityId: string, status: 'approved' | 'rejected', comments?: string) => {
-    setActivities(prev => prev.map(activity => 
-      activity.id === activityId 
-        ? { 
-            ...activity, 
-            status, 
+  const updateActivityStatus = (
+    id: string, 
+    status: Activity['status'], 
+    comments?: string
+  ) => {
+    const updatedActivities = activities.map(activity => 
+      activity.id === id 
+        ? {
+            ...activity,
+            status,
             reviewedAt: new Date().toISOString(),
-            reviewedBy: currentUser?.name,
-            comments 
+            reviewedBy: currentUser?.name || 'Unknown',
+            comments: comments || activity.comments
           }
         : activity
-    ));
+    );
+    
+    setActivities(updatedActivities);
+    
+    try {
+      localStorage.setItem('activities', JSON.stringify(updatedActivities));
+    } catch (error) {
+      console.error('Error saving activities to localStorage:', error);
+    }
   };
 
+  // User management functions
   const addUser = (userData: Omit<User, 'id'>) => {
     const newUser: User = {
       ...userData,
-      id: Date.now().toString()
+      id: `user_${Date.now()}`
     };
-    setUsers(prev => [...prev, newUser]);
+    
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    
+    try {
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+    } catch (error) {
+      console.error('Error saving users to localStorage:', error);
+    }
   };
 
   const updateUser = (userId: string, userData: Partial<User>) => {
-    setUsers(prev => prev.map(user => 
-      user.id === userId ? { ...user, ...userData } : user
-    ));
+    const updatedUsers = users.map(user => 
+      user.id === userId 
+        ? { ...user, ...userData }
+        : user
+    );
+    
+    setUsers(updatedUsers);
+    
+    try {
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+    } catch (error) {
+      console.error('Error saving users to localStorage:', error);
+    }
   };
 
   const deleteUser = (userId: string) => {
-    setUsers(prev => prev.filter(user => user.id !== userId));
-    // Also remove activities for deleted students
-    setActivities(prev => prev.filter(activity => {
-      const user = users.find(u => u.id === userId);
-      return !(user?.role === 'student' && activity.studentId === user.studentId);
-    }));
+    const updatedUsers = users.filter(user => user.id !== userId);
+    setUsers(updatedUsers);
+    
+    try {
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+    } catch (error) {
+      console.error('Error saving users to localStorage:', error);
+    }
   };
 
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
+  // Filter activities by status for different views
+  const approvedActivities = activities.filter(a => a.status === 'approved');
+  const pendingActivities = activities.filter(a => a.status === 'pending');
 
+  // Render section content
   const renderCurrentSection = () => {
-    const studentActivities = activities.filter(a => a.studentId === currentUser?.studentId) || [];
-    const approvedActivities = activities.filter(a => a.status === 'approved') || [];
+    if (!currentUser) return null;
 
     switch (currentSection) {
       case 'dashboard':
-        if (currentUser?.role === 'student') {
+        if (currentUser.role === 'student') {
           return (
-            <StudentDashboard 
-              user={currentUser} 
-              activities={studentActivities}
+            <StudentDashboard
+              user={currentUser}
+              activities={activities.filter(a => a.studentId === currentUser.studentId)}
               onAddActivity={addActivity}
             />
           );
-        } else if (currentUser?.role === 'faculty') {
+        } else if (currentUser.role === 'faculty') {
           return (
-            <FacultyDashboard 
-              activities={activities}
+            <FacultyDashboard
+              user={currentUser}
+              activities={pendingActivities}
               onUpdateActivityStatus={updateActivityStatus}
             />
           );
-        } else if (currentUser?.role === 'admin') {
+        } else if (currentUser.role === 'admin') {
           return (
             <AdminDashboard 
               user={currentUser}
@@ -338,50 +355,84 @@ export default function App() {
         return <AnalyticsView user={currentUser!} activities={activities} users={users} />;
       
       case 'user-management':
-        return (
-          <UserManagementView 
-            users={users}
-            onAddUser={addUser}
-            onUpdateUser={updateUser}
-            onDeleteUser={deleteUser}
-          />
-        );
+        if (currentUser?.role === 'admin') {
+          return (
+            <UserManagementView
+              users={users}
+              onAddUser={addUser}
+              onUpdateUser={updateUser}
+              onDeleteUser={deleteUser}
+            />
+          );
+        }
+        break;
       
       case 'reports':
-        return <ReportsView activities={approvedActivities} users={users} />;
+        return <ReportsView user={currentUser!} activities={activities} users={users} />;
       
       case 'settings':
-        return <SettingsView user={currentUser!} onUpdateUser={(userData) => updateUser(currentUser!.id, userData)} />;
+        return <SettingsView user={currentUser!} />;
       
       case 'profile':
-        return <StudentProfileView user={currentUser!} activities={studentActivities} />;
+        if (currentUser?.role === 'student') {
+          return (
+            <StudentProfileView
+              user={currentUser}
+              activities={activities.filter(a => a.studentId === currentUser.studentId)}
+            />
+          );
+        }
+        break;
       
       case 'activities':
-        return (
-          <StudentActivitiesView 
-            user={currentUser!}
-            activities={studentActivities}
-            onAddActivity={addActivity}
-          />
-        );
+        if (currentUser?.role === 'student') {
+          return (
+            <StudentActivitiesView
+              user={currentUser}
+              activities={activities.filter(a => a.studentId === currentUser.studentId)}
+              onAddActivity={addActivity}
+            />
+          );
+        } else if (currentUser?.role === 'faculty') {
+          return (
+            <FacultyReviewView
+              user={currentUser}
+              activities={pendingActivities}
+              onUpdateActivityStatus={updateActivityStatus}
+            />
+          );
+        }
+        break;
       
       case 'students':
-        return <FacultyStudentsView users={users.filter(u => u.role === 'student')} activities={activities} />;
+        if (currentUser?.role === 'faculty') {
+          return (
+            <FacultyStudentsView
+              user={currentUser}
+              activities={activities}
+              users={users.filter(u => u.role === 'student')}
+            />
+          );
+        }
+        break;
       
       case 'review':
-        return (
-          <FacultyReviewView 
-            activities={activities}
-            onUpdateActivityStatus={updateActivityStatus}
-          />
-        );
+        if (currentUser?.role === 'faculty') {
+          return (
+            <FacultyReviewView
+              user={currentUser}
+              activities={pendingActivities}
+              onUpdateActivityStatus={updateActivityStatus}
+            />
+          );
+        }
+        break;
       
       default:
         return <div className="p-8 text-center">Section not found</div>;
     }
   };
 
-  // Render role-specific dashboard
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-background">
