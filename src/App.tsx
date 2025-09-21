@@ -299,16 +299,27 @@ export default function App() {
 
   return (
     <>
-      <AppRouter
-        currentUser={currentUser}
-        activities={activities}
-        users={users}
-        onAddActivity={addActivity}
-        onUpdateActivityStatus={updateActivityStatus}
-        onAddUser={addUser}
-        onUpdateUser={updateUser}
-        onDeleteUser={deleteUser}
-      />
+      <div className="min-h-screen bg-gray-100 p-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">Debug Info</h1>
+        <div className="bg-white p-4 rounded-lg shadow mb-4">
+          <p><strong>Clerk User Loaded:</strong> {isLoaded ? 'Yes' : 'No'}</p>
+          <p><strong>Clerk User:</strong> {clerkUser ? clerkUser.fullName || 'Unnamed User' : 'None'}</p>
+          <p><strong>Current User:</strong> {currentUser ? currentUser.name : 'None'}</p>
+          <p><strong>Activities Count:</strong> {activities.length}</p>
+          <p><strong>Users Count:</strong> {users.length}</p>
+        </div>
+        {/* Temporarily comment out AppRouter */}
+        {/* <AppRouter
+          currentUser={currentUser}
+          activities={activities}
+          users={users}
+          onAddActivity={addActivity}
+          onUpdateActivityStatus={updateActivityStatus}
+          onAddUser={addUser}
+          onUpdateUser={updateUser}
+          onDeleteUser={deleteUser}
+        /> */}
+      </div>
       <Toaster position="bottom-right" />
     </>
   );
