@@ -40,35 +40,34 @@ export default function App() {
 
   // Convert Clerk user to your User interface and handle role assignment
   useEffect(() => {
-    if (isLoaded && clerkUser) {
+    if (actualIsLoaded && actualClerkUser) {
       // Check if user already exists in our users array
-      const existingUser = users.find(u => u.email === clerkUser.primaryEmailAddress?.emailAddress);
+      const existingUser = users.find(u => u.email === actualClerkUser.primaryEmailAddress?.emailAddress);
       
       if (existingUser) {
         // Use existing user data with role information
         setCurrentUser(existingUser);
       } else {
         // Create new user with default student role
-        // In a real app, you'd set roles via Clerk metadata or your backend
         const mappedUser: User = {
-          id: clerkUser.id,
-          name: clerkUser.fullName || `${clerkUser.firstName} ${clerkUser.lastName}` || 'User',
-          email: clerkUser.primaryEmailAddress?.emailAddress || '',
-          role: 'student', // Default role - can be customized via Clerk metadata
-          department: "Computer Science", // Can be set via Clerk metadata
-          year: "Senior", // Can be set via Clerk metadata
-          studentId: `CS${Date.now().toString().slice(-6)}` // Generate or get from metadata
+          id: actualClerkUser.id,
+          name: actualClerkUser.fullName || `${actualClerkUser.firstName} ${actualClerkUser.lastName}` || 'User',
+          email: actualClerkUser.primaryEmailAddress?.emailAddress || '',
+          role: 'student',
+          department: "Computer Science",
+          year: "Senior",
+          studentId: `CS${Date.now().toString().slice(-6)}`
         };
         setCurrentUser(mappedUser);
-        
-        // Add new user to users array
         setUsers(prev => [...prev, mappedUser]);
       }
-    } else if (isLoaded && !clerkUser) {
-      // User is signed out
-      setCurrentUser(null);
+    } else if (actualIsLoaded && !actualClerkUser) {
+      // For development without Clerk, create a demo user
+      if (!currentUser && users.length > 0) {
+        setCurrentUser(users[0]); // Use first demo user
+      }
     }
-  }, [clerkUser, isLoaded, users]);
+  }, [actualClerkUser, actualIsLoaded, users, currentUser]);
 
   // Initialize data on mount
   useEffect(() => {
