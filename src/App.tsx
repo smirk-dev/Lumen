@@ -311,30 +311,152 @@ export default function App() {
     }
   };
 
+  // Filter activities by status for different views
+  const approvedActivities = activities.filter(a => a.status === 'approved');
+  const pendingActivities = activities.filter(a => a.status === 'pending');
+
+  // Render section content
+  const renderCurrentSection = () => {
+    if (!currentUser) return null;
+
+    switch (currentSection) {
+      case 'dashboard':
+        if (currentUser.role === 'student') {
+          return (
+            <StudentDashboard
+              user={currentUser}
+              activities={activities.filter(a => a.studentId === currentUser.studentId)}
+              onAddActivity={addActivity}
+            />
+          );
+        } else if (currentUser.role === 'faculty') {
+          return (
+            <FacultyDashboard
+              user={currentUser}
+              activities={pendingActivities}
+              onUpdateActivityStatus={updateActivityStatus}
+            />
+          );
+        } else if (currentUser.role === 'admin') {
+          return (
+            <AdminDashboard 
+              user={currentUser}
+              activities={approvedActivities}
+              users={users}
+              onAddUser={addUser}
+              onUpdateUser={updateUser}
+              onDeleteUser={deleteUser}
+            />
+          );
+        }
+        break;
+      
+      case 'analytics':
+        return <AnalyticsView user={currentUser!} activities={activities} users={users} />;
+      
+      case 'user-management':
+        if (currentUser?.role === 'admin') {
+          return (
+            <UserManagementView
+              users={users}
+              onAddUser={addUser}
+              onUpdateUser={updateUser}
+              onDeleteUser={deleteUser}
+            />
+          );
+        }
+        break;
+      
+      case 'reports':
+        return <ReportsView user={currentUser!} activities={activities} users={users} />;
+      
+      case 'settings':
+        return <SettingsView user={currentUser!} />;
+      
+      case 'profile':
+        if (currentUser?.role === 'student') {
+          return (
+            <StudentProfileView
+              user={currentUser}
+              activities={activities.filter(a => a.studentId === currentUser.studentId)}
+            />
+          );
+        }
+        break;
+      
+      case 'activities':
+        if (currentUser?.role === 'student') {
+          return (
+            <StudentActivitiesView
+              user={currentUser}
+              activities={activities.filter(a => a.studentId === currentUser.studentId)}
+              onAddActivity={addActivity}
+            />
+          );
+        } else if (currentUser?.role === 'faculty') {
+          return (
+            <FacultyReviewView
+              user={currentUser}
+              activities={pendingActivities}
+              onUpdateActivityStatus={updateActivityStatus}
+            />
+          );
+        }
+        break;
+      
+      case 'students':
+        if (currentUser?.role === 'faculty') {
+          return (
+            <FacultyStudentsView
+              user={currentUser}
+              activities={activities}
+              users={users.filter(u => u.role === 'student')}
+            />
+          );
+        }
+        break;
+      
+      case 'review':
+        if (currentUser?.role === 'faculty') {
+          return (
+            <FacultyReviewView
+              user={currentUser}
+              activities={pendingActivities}
+              onUpdateActivityStatus={updateActivityStatus}
+            />
+          );
+        }
+        break;
+      
+      default:
+        return <div className="p-8 text-center">Section not found</div>;
+    }
+  };
+
   return (
-    <>
-      <div className="min-h-screen bg-gray-100 p-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Debug Info</h1>
-        <div className="bg-white p-4 rounded-lg shadow mb-4">
-          <p><strong>Clerk User Loaded:</strong> {isLoaded ? 'Yes' : 'No'}</p>
-          <p><strong>Clerk User:</strong> {clerkUser ? clerkUser.fullName || 'Unnamed User' : 'None'}</p>
-          <p><strong>Current User:</strong> {currentUser ? currentUser.name : 'None'}</p>
-          <p><strong>Activities Count:</strong> {activities.length}</p>
-          <p><strong>Users Count:</strong> {users.length}</p>
-        </div>
-        {/* Temporarily comment out AppRouter */}
-        {/* <AppRouter
-          currentUser={currentUser}
-          activities={activities}
-          users={users}
-          onAddActivity={addActivity}
-          onUpdateActivityStatus={updateActivityStatus}
-          onAddUser={addUser}
-          onUpdateUser={updateUser}
-          onDeleteUser={deleteUser}
-        /> */}
+    <ErrorBoundary>
+      <div className="min-h-screen bg-background">
+        <SignedOut>
+          <LoginForm />
+        </SignedOut>
+        
+        <SignedIn>
+          {currentUser && (
+            <>
+              <RoleHeader 
+                user={currentUser} 
+                onLogout={() => {}} // Clerk handles logout
+                currentSection={currentSection}
+                onNavigate={setCurrentSection}
+              />
+              
+              {renderCurrentSection()}
+            </>
+          )}
+        </SignedIn>
+        
+        <Toaster position="bottom-right" />
       </div>
-      <Toaster position="bottom-right" />
-    </>
+    </ErrorBoundary>
   );
 }
