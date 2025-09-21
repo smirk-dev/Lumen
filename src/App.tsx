@@ -22,6 +22,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [currentSection, setCurrentSection] = useState<NavigationSection>('dashboard');
 
   // Convert Clerk user to your User interface and handle role assignment
   useEffect(() => {
