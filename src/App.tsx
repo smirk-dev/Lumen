@@ -1,28 +1,14 @@
 import { useState, useEffect } from "react";
-import { useUser, SignedIn, SignedOut } from "@clerk/clerk-react";
-import { LoginForm } from "./components/auth/LoginForm";
-import { StudentDashboard } from "./components/student/StudentDashboard";
-import { FacultyDashboard } from "./components/faculty/FacultyDashboard";
-import { AdminDashboard } from "./components/admin/AdminDashboard";
-import { RoleHeader } from "./components/shared/RoleHeader";
+import { useUser } from "@clerk/clerk-react";
 import { Toaster } from "./components/ui/sonner";
-import { AnalyticsView } from "./components/analytics/AnalyticsView";
-import { UserManagementView } from "./components/admin/UserManagementView";
-import { ReportsView } from "./components/reports/ReportsView";
-import { SettingsView } from "./components/settings/SettingsView";
-import { StudentProfileView } from "./components/student/StudentProfileView";
-import { StudentActivitiesView } from "./components/student/StudentActivitiesView";
-import { FacultyStudentsView } from "./components/faculty/FacultyStudentsView";
-import { FacultyReviewView } from "./components/faculty/FacultyReviewView";
-import ErrorBoundary from "./components/ErrorBoundary";
-import type { User, Activity, NavigationSection } from "./types";
+import { AppRouter } from "./routes/AppRouter";
+import type { User, Activity } from "./types";
 
 export default function App() {
   const { user: clerkUser, isLoaded } = useUser();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [currentSection, setCurrentSection] = useState<NavigationSection>('dashboard');
 
   // Convert Clerk user to your User interface and handle role assignment
   useEffect(() => {
@@ -222,190 +208,108 @@ export default function App() {
     }
   };
 
-  // Save activities to localStorage whenever they change
-  useEffect(() => {
-    if (activities.length > 0) {
-      try {
-        localStorage.setItem('activities', JSON.stringify(activities));
-      } catch (error) {
-        console.error('Error saving activities to localStorage:', error);
-      }
-    }
-  }, [activities]);
-
-  // Save users to localStorage whenever they change
-  useEffect(() => {
-    if (users.length > 0) {
-      try {
-        localStorage.setItem('users', JSON.stringify(users));
-      } catch (error) {
-        console.error('Error saving users to localStorage:', error);
-      }
-    }
-  }, [users]);
-
+  // Activity management functions
   const addActivity = (activityData: Omit<Activity, 'id' | 'submittedAt' | 'status'>) => {
     const newActivity: Activity = {
       ...activityData,
-      id: Date.now().toString(),
-      status: 'pending',
-      submittedAt: new Date().toISOString()
+      id: `act_${Date.now()}`,
+      submittedAt: new Date().toISOString(),
+      status: 'pending'
     };
-    setActivities(prev => [newActivity, ...prev]);
-  };
-
-  const updateActivityStatus = (activityId: string, status: 'approved' | 'rejected', comments?: string) => {
-    setActivities(prev => prev.map(activity => 
-      activity.id === activityId 
-        ? { 
-            ...activity, 
-            status, 
-            reviewedAt: new Date().toISOString(),
-            reviewedBy: currentUser?.name,
-            comments 
-          }
-        : activity
-    ));
-  };
-
-  const addUser = (userData: Omit<User, 'id'>) => {
-    const newUser: User = {
-      ...userData,
-      id: Date.now().toString()
-    };
-    setUsers(prev => [...prev, newUser]);
-  };
-
-  const updateUser = (userId: string, userData: Partial<User>) => {
-    setUsers(prev => prev.map(user => 
-      user.id === userId ? { ...user, ...userData } : user
-    ));
-  };
-
-  const deleteUser = (userId: string) => {
-    setUsers(prev => prev.filter(user => user.id !== userId));
-    // Also remove activities for deleted students
-    setActivities(prev => prev.filter(activity => {
-      const user = users.find(u => u.id === userId);
-      return !(user?.role === 'student' && activity.studentId === user.studentId);
-    }));
-  };
-
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
-
-  const renderCurrentSection = () => {
-    const studentActivities = activities.filter(a => a.studentId === currentUser?.studentId) || [];
-    const approvedActivities = activities.filter(a => a.status === 'approved') || [];
-
-    switch (currentSection) {
-      case 'dashboard':
-        if (currentUser?.role === 'student') {
-          return (
-            <StudentDashboard 
-              user={currentUser} 
-              activities={studentActivities}
-              onAddActivity={addActivity}
-            />
-          );
-        } else if (currentUser?.role === 'faculty') {
-          return (
-            <FacultyDashboard 
-              activities={activities}
-              onUpdateActivityStatus={updateActivityStatus}
-            />
-          );
-        } else if (currentUser?.role === 'admin') {
-          return (
-            <AdminDashboard 
-              user={currentUser}
-              activities={approvedActivities}
-              users={users}
-              onAddUser={addUser}
-              onUpdateUser={updateUser}
-              onDeleteUser={deleteUser}
-            />
-          );
-        }
-        break;
-      
-      case 'analytics':
-        return <AnalyticsView user={currentUser!} activities={activities} users={users} />;
-      
-      case 'user-management':
-        return (
-          <UserManagementView 
-            users={users}
-            onAddUser={addUser}
-            onUpdateUser={updateUser}
-            onDeleteUser={deleteUser}
-          />
-        );
-      
-      case 'reports':
-        return <ReportsView activities={approvedActivities} users={users} />;
-      
-      case 'settings':
-        return <SettingsView user={currentUser!} onUpdateUser={(userData) => updateUser(currentUser!.id, userData)} />;
-      
-      case 'profile':
-        return <StudentProfileView user={currentUser!} activities={studentActivities} />;
-      
-      case 'activities':
-        return (
-          <StudentActivitiesView 
-            user={currentUser!}
-            activities={studentActivities}
-            onAddActivity={addActivity}
-          />
-        );
-      
-      case 'students':
-        return <FacultyStudentsView users={users.filter(u => u.role === 'student')} activities={activities} />;
-      
-      case 'review':
-        return (
-          <FacultyReviewView 
-            activities={activities}
-            onUpdateActivityStatus={updateActivityStatus}
-          />
-        );
-      
-      default:
-        return <div className="p-8 text-center">Section not found</div>;
+    
+    const updatedActivities = [...activities, newActivity];
+    setActivities(updatedActivities);
+    
+    try {
+      localStorage.setItem('activities', JSON.stringify(updatedActivities));
+    } catch (error) {
+      console.error('Error saving activities to localStorage:', error);
     }
   };
 
-  // Render role-specific dashboard
+  const updateActivityStatus = (
+    id: string, 
+    status: Activity['status'], 
+    comments?: string
+  ) => {
+    const updatedActivities = activities.map(activity => 
+      activity.id === id 
+        ? {
+            ...activity,
+            status,
+            reviewedAt: new Date().toISOString(),
+            reviewedBy: currentUser?.name || 'Unknown',
+            comments: comments || activity.comments
+          }
+        : activity
+    );
+    
+    setActivities(updatedActivities);
+    
+    try {
+      localStorage.setItem('activities', JSON.stringify(updatedActivities));
+    } catch (error) {
+      console.error('Error saving activities to localStorage:', error);
+    }
+  };
+
+  // User management functions
+  const addUser = (userData: Omit<User, 'id'>) => {
+    const newUser: User = {
+      ...userData,
+      id: `user_${Date.now()}`
+    };
+    
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    
+    try {
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+    } catch (error) {
+      console.error('Error saving users to localStorage:', error);
+    }
+  };
+
+  const updateUser = (userId: string, userData: Partial<User>) => {
+    const updatedUsers = users.map(user => 
+      user.id === userId 
+        ? { ...user, ...userData }
+        : user
+    );
+    
+    setUsers(updatedUsers);
+    
+    try {
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+    } catch (error) {
+      console.error('Error saving users to localStorage:', error);
+    }
+  };
+
+  const deleteUser = (userId: string) => {
+    const updatedUsers = users.filter(user => user.id !== userId);
+    setUsers(updatedUsers);
+    
+    try {
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+    } catch (error) {
+      console.error('Error saving users to localStorage:', error);
+    }
+  };
+
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen bg-background">
-        <SignedOut>
-          <LoginForm />
-        </SignedOut>
-        
-        <SignedIn>
-          {currentUser && (
-            <>
-              <RoleHeader 
-                user={currentUser} 
-                onLogout={() => {}} // Clerk handles logout
-                currentSection={currentSection}
-                onNavigate={setCurrentSection}
-              />
-              
-              {renderCurrentSection()}
-            </>
-          )}
-        </SignedIn>
-        
-        <Toaster position="bottom-right" />
-      </div>
-    </ErrorBoundary>
+    <>
+      <AppRouter
+        currentUser={currentUser}
+        activities={activities}
+        users={users}
+        onAddActivity={addActivity}
+        onUpdateActivityStatus={updateActivityStatus}
+        onAddUser={addUser}
+        onUpdateUser={updateUser}
+        onDeleteUser={deleteUser}
+      />
+      <Toaster position="bottom-right" />
+    </>
   );
 }
